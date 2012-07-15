@@ -17,14 +17,12 @@ import android.view.ViewGroup;
 public class Main extends Activity implements SurfaceHolder.Callback {
 	static String logTag = Main.class.toString();
 
-	/*
-	 * first is width, second is height. This is set by the onWindowFocusChanged
-	 * callback below, as that is the first time when we know the size of the
-	 * relative layout
-	 */
-	Pair<Integer, Integer> layoutSize = null;
-
 	Camera camera = null;
+
+	/*
+	 * This needs to be a member because it is determined in onResume and used
+	 * in onWindowFocusChanges (see below)
+	 */
 	Camera.Size previewSize = null;
 
 	@Override
@@ -50,7 +48,7 @@ public class Main extends Activity implements SurfaceHolder.Callback {
 
 		if (null == camera) {
 			camera = Camera.open();
-			
+
 			Camera.Parameters parameters = camera.getParameters();
 
 			/*
@@ -74,8 +72,8 @@ public class Main extends Activity implements SurfaceHolder.Callback {
 
 			/*
 			 * Take the smallest preview size. You might need something else
-			 * here. We store the size we choose in the member variable so
-			 * it is available when the surface was created
+			 * here. We store the size we choose in the member variable so it is
+			 * available when the screen layout pass is done..
 			 */
 			previewSize = sizes.get(0);
 			parameters.setPreviewSize(previewSize.width, previewSize.height);
@@ -102,33 +100,6 @@ public class Main extends Activity implements SurfaceHolder.Callback {
 		Log.d(logTag, "surfaceChanged");
 
 		try {
-
-			/*
-			 * Resize the surface view such that it fills the layout but keeps
-			 * the aspect ratio
-			 */
-			SurfaceView surfaceView = (SurfaceView) findViewById(R.id.surface);
-			ViewGroup.LayoutParams layoutParams = surfaceView.getLayoutParams();
-
-			double widthFactor = (double) layoutSize.first
-					/ (double) previewSize.width;
-
-			double heightFactor = (double) layoutSize.second
-					/ (double) previewSize.height;
-
-			double scaleFactor = Math.max(widthFactor, heightFactor);
-
-			layoutParams.width = (int) Math.ceil(scaleFactor
-					* previewSize.width);
-			layoutParams.height = (int) Math.ceil(scaleFactor
-					* previewSize.height);
-
-			Log.d(logTag, "new size: " + layoutParams.width + " "
-					+ layoutParams.height);
-
-			surfaceView.setLayoutParams(layoutParams);
-
-			findViewById(R.id.layout).requestLayout();
 
 			camera.setPreviewDisplay(holder);
 			camera.startPreview();
@@ -163,9 +134,17 @@ public class Main extends Activity implements SurfaceHolder.Callback {
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
 
+		/*
+		 * If we didn't gain focus (i.e. became visible), we do nothing
+		 */
 		if (false == hasFocus) {
 			return;
 		}
+
+		/*
+		 * first is width, second is height.
+		 */
+		Pair<Integer, Integer> layoutSize = null;
 
 		View layout = findViewById(R.id.layout);
 		layoutSize = new Pair<Integer, Integer>(layout.getWidth(),
@@ -173,5 +152,39 @@ public class Main extends Activity implements SurfaceHolder.Callback {
 
 		Log.d(logTag, "onWindowFocusChanged. layout size: " + layoutSize.first
 				+ " " + layoutSize.second);
+
+		/*
+		 * Resize the surface view such that it fills the layout but keeps the
+		 * aspect ratio
+		 */
+		SurfaceView surfaceView = (SurfaceView) findViewById(R.id.surface);
+		ViewGroup.LayoutParams layoutParams = surfaceView.getLayoutParams();
+
+		/*
+		 * Calculate the two scaling factors to scale the surface up to the
+		 * whole width/height of the encompassing layout
+		 */
+		double widthFactor = (double) layoutSize.first
+				/ (double) previewSize.width;
+
+		double heightFactor = (double) layoutSize.second
+				/ (double) previewSize.height;
+
+		/*
+		 * Take the bigger of the two since we want the preview to fill the
+		 * screen (this results in some parts of the preview not being visible.
+		 * The alternative would be a preview that doesn't fill the whole screen
+		 */
+		double scaleFactor = Math.max(widthFactor, heightFactor);
+
+		layoutParams.width = (int) Math.ceil(scaleFactor * previewSize.width);
+		layoutParams.height = (int) Math.ceil(scaleFactor * previewSize.height);
+
+		Log.d(logTag, "new size: " + layoutParams.width + " "
+				+ layoutParams.height);
+
+		surfaceView.setLayoutParams(layoutParams);
+
+		findViewById(R.id.layout).requestLayout();
 	}
 }
