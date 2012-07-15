@@ -71,11 +71,11 @@ public class Main extends Activity implements SurfaceHolder.Callback {
 			});
 
 			/*
-			 * Take the smallest preview size. You might need something else
+			 * Take the largest preview size. You might need something else
 			 * here. We store the size we choose in the member variable so it is
 			 * available when the screen layout pass is done..
 			 */
-			previewSize = sizes.get(0);
+			previewSize = sizes.get(sizes.size() - 1);
 			parameters.setPreviewSize(previewSize.width, previewSize.height);
 
 			camera.setParameters(parameters);
