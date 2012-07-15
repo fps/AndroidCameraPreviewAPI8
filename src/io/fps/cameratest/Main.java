@@ -55,7 +55,7 @@ public class Main extends Activity implements SurfaceHolder.Callback {
 			 * Get the list of supported preview sizes and sort them in
 			 * ascending order according to their respective pixel counts
 			 */
-			List<Camera.Size> sizes = parameters.getSupportedPictureSizes();
+			List<Camera.Size> sizes = parameters.getSupportedPreviewSizes();
 			Collections.sort(sizes, new Comparator<Camera.Size>() {
 
 				@Override
@@ -129,6 +129,11 @@ public class Main extends Activity implements SurfaceHolder.Callback {
 	 * We use this callback as a hack, since at this point the layout pass has
 	 * been done and we can determine the size of the layout (which we need to
 	 * scale the surface view with the fitting aspect ratio.
+	 * 
+	 * Note that this is necessary only for API level 8. API level 11 has a
+	 * View.OnLayoutCallback or something.. :D
+	 * 
+	 * Note also that this might be called also when a dialog is closed, etc..
 	 */
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
